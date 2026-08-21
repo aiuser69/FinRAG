@@ -11,7 +11,7 @@ from groq import Groq
 # Page setup
 # ---------------------------------------------------------------------------
 st.set_page_config(
-    page_title="FinRAG — NSE Filings Intelligence",
+    page_title="FinRAG — Document Intelligence",
     page_icon="🪙",
     layout="wide",
 )
@@ -20,7 +20,7 @@ st.set_page_config(
 # Design system: "Mela Ledger"
 # Forest green poster background, marigold-gold display type with a hard
 # drop shadow, a rotated pink sticker, and a candy-striped textile border
-# on the CTA — festival-poster energy applied to a filings terminal.
+# on the CTA — festival-poster energy applied to a document terminal.
 # ---------------------------------------------------------------------------
 st.markdown(
     """
@@ -121,22 +121,7 @@ st.markdown(
     .hero-meta .credit { color: var(--gold-hi); }
 
     /* ---------- Sunburst ---------- */
-    .burst-wrap { display: flex; justify-content: center; margin: 18px 0 6px 0; opacity: 0.9; }
-
-    /* ---------- Ticker tape ---------- */
-    .ticker-wrap {
-      overflow: hidden; white-space: nowrap;
-      background: var(--gold); border-top: 3px solid var(--ink); border-bottom: 3px solid var(--ink);
-      padding: 9px 0; margin: 26px 0 30px 0; transform: rotate(-0.4deg);
-    }
-    .ticker-track {
-      display: inline-block; animation: tickerScroll 42s linear infinite;
-      font-family: var(--font-mono); font-weight: 700; font-size: 0.8rem;
-      letter-spacing: 0.05em; color: var(--ink); text-transform: uppercase;
-    }
-    .tkr-code { color: var(--pink-deep); margin-right: 2px; }
-    @keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-    @media (prefers-reduced-motion: reduce) { .ticker-track { animation: none; } }
+    .burst-wrap { display: flex; justify-content: center; margin: 18px 0 20px 0; opacity: 0.9; }
 
     /* ---------- Scope line ---------- */
     .scope-line {
@@ -172,11 +157,6 @@ st.markdown(
     }
     .side-title { font-family: var(--font-display); font-weight: 800; font-style: italic; font-size: 1.7rem; color: var(--gold); margin: 2px 0 16px 0; }
 
-    [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
-      background-color: var(--panel) !important; border: 2px solid var(--gold) !important;
-      border-radius: 6px !important; font-family: var(--font-mono) !important; font-size: 0.88rem !important;
-    }
-
     .note-box {
       border: 2px dashed var(--pink); background: var(--panel);
       padding: 12px 14px; border-radius: 6px; margin-top: 20px;
@@ -201,7 +181,6 @@ st.markdown(
     /* ---------- Chat ---------- */
     [data-testid="stChatMessage"] { background: transparent !important; animation: fadeInUp 0.3s ease both; }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    @media (prefers-reduced-motion: reduce) { [data-testid="stChatMessage"] { animation: none; } }
 
     .msg-tag {
       font-family: var(--font-mono); font-weight: 700; font-size: 0.64rem; letter-spacing: 0.1em;
@@ -249,17 +228,11 @@ st.markdown(
 GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 client = Groq(api_key=GROQ_API_KEY)
 
-# 2. Cache resources
-@st.cache_resource
-def load_base_vectorstore():
-    embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-    return Chroma(persist_directory="data/chroma_db", embedding_function=embeddings)
-
+# 2. Cache embedding model
 @st.cache_resource
 def load_embeddings():
     return SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
 
-base_vectorstore = load_base_vectorstore()
 embeddings = load_embeddings()
 
 # ---------------------------------------------------------------------------
@@ -269,7 +242,7 @@ st.markdown(
     """
     <div class="nav-row">
       <div class="nav-logo">🪙 FINRAG</div>
-      <div class="nav-links">GROUNDED · CITED · NIFTY 50</div>
+      <div class="nav-links">GROUNDED · CITED · SECURE UPLOADER</div>
       <a class="nav-cta" href="#chat-anchor">OPEN TERMINAL ↓</a>
     </div>
     """,
@@ -277,30 +250,22 @@ st.markdown(
 )
 
 # ---------------------------------------------------------------------------
-# Sidebar
+# Sidebar - Attach PDF Workspace
 # ---------------------------------------------------------------------------
 st.sidebar.markdown(
-    '<div class="side-eyebrow">TERMINAL</div><div class="side-title">Coverage</div>',
+    '<div class="side-eyebrow">WORKSPACE</div><div class="side-title">Attach PDF</div>',
     unsafe_allow_html=True,
 )
 
-companies = [
-    "Adani", "Bajaj", "Bharti Airtel", "HDFC Bank",
-    "Hindustan Unilever", "ICICI Bank", "Infosys",
-    "Larsen & Toubro", "Mahindra", "Maruti Suzuki",
-    "Reliance", "SBI", "Sun Pharma", "TCS", "Titan",
-    "--- Upload Custom PDF ---"
-]
-company = st.sidebar.selectbox("Select Target Filing", companies)
-
-# 3. Handle Custom PDF Uploads
 if "custom_db" not in st.session_state:
     st.session_state.custom_db = None
+if "file_name" not in st.session_state:
+    st.session_state.file_name = None
 
-if company == "--- Upload Custom PDF ---":
-    uploaded_file = st.sidebar.file_uploader("Upload private research PDF", type="pdf")
+uploaded_file = st.sidebar.file_uploader("Drop document here", type="pdf")
 
-    if uploaded_file is not None and st.session_state.custom_db is None:
+if uploaded_file is not None:
+    if st.session_state.file_name != uploaded_file.name:
         with st.spinner("Processing document vectors..."):
             doc = fitz.open(stream=uploaded_file.getvalue(), filetype="pdf")
             page_documents = []
@@ -310,33 +275,30 @@ if company == "--- Upload Custom PDF ---":
                 if text.strip():
                     page_documents.append(Document(
                         page_content=text,
-                        metadata={"page_num": page_num + 1, "doc_type": "Custom Upload", "year": "N/A"}
+                        metadata={"page_num": page_num + 1, "doc_type": "Attached Document", "year": "2026"}
                     ))
 
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=750, chunk_overlap=100)
             chunks = text_splitter.split_documents(page_documents)
             st.session_state.custom_db = Chroma.from_documents(documents=chunks, embedding=embeddings)
-
-    if st.session_state.custom_db is not None:
-        st.sidebar.success("🔒 Secure in-memory database active")
-
-    custom_vectorstore = st.session_state.custom_db
+            st.session_state.file_name = uploaded_file.name
+        st.sidebar.success("🔒 Secure In-Memory DB Active")
 else:
-    custom_vectorstore = None
     st.session_state.custom_db = None
+    st.session_state.file_name = None
 
 st.sidebar.markdown(
     """
     <div class="note-box">
       <div class="note-label">NOTE</div>
-      <div class="note-text">Ask about margins, regulatory headwinds, or capital allocation strategy.</div>
+      <div class="note-text">Attach any report, financial statement, or research paper to query it securely.</div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 st.sidebar.markdown(
-    '<div class="disclaimer">FOR RESEARCH &amp; EDUCATIONAL USE ONLY.<br>NOT INVESTMENT ADVICE.</div>',
+    '<div class="disclaimer">SESSION ISOLATED.<br>YOUR DATA STAYS PRIVATE.</div>',
     unsafe_allow_html=True,
 )
 
@@ -346,14 +308,14 @@ st.sidebar.markdown(
 st.markdown(
     """
     <div class="hero">
-      <div class="eyebrow">NSE Annual Reports · Earnings Calls</div>
+      <div class="eyebrow">Secure Document Intelligence · Page-Level Citations</div>
       <div class="hero-title-row">
         <span class="hero-title">FIN</span>
         <span class="sticker">CITED</span>
         <span class="hero-title">RAG</span>
       </div>
       <div class="hero-meta">
-        <span>NIFTY 50 FILINGS &nbsp;·&nbsp; GROUNDED ANSWERS ONLY</span>
+        <span>UNIVERSAL PARSER &nbsp;·&nbsp; GROUNDED ANSWERS ONLY</span>
         <span class="credit">BUILT BY MOHOK</span>
       </div>
     </div>
@@ -372,43 +334,23 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Ticker tape of covered companies
-tickers = {
-    "Adani": "ADANIENT", "Bajaj": "BAJFINANCE", "Bharti Airtel": "BHARTIARTL",
-    "HDFC Bank": "HDFCBANK", "Hindustan Unilever": "HINDUNILVR", "ICICI Bank": "ICICIBANK",
-    "Infosys": "INFY", "Larsen & Toubro": "LT", "Mahindra": "M&M",
-    "Maruti Suzuki": "MARUTI", "Reliance": "RELIANCE", "SBI": "SBIN",
-    "Sun Pharma": "SUNPHARMA", "TCS": "TCS", "Titan": "TITAN",
-}
-ticker_items = "&nbsp;&nbsp;•&nbsp;&nbsp;".join(
-    f"{name} <span class='tkr-code'>{code}</span>" for name, code in tickers.items()
-)
+active_file_display = st.session_state.file_name if st.session_state.file_name else "None Attached"
 st.markdown(
-    f"""
-    <div class="ticker-wrap">
-      <div class="ticker-track">{ticker_items}&nbsp;&nbsp;•&nbsp;&nbsp;{ticker_items}</div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.markdown(
-    f'<div class="scope-line">ACTIVE SCOPE → <span class="scope-value">{company.upper()}</span></div>',
+    f'<div class="scope-line">ACTIVE DOCUMENT → <span class="scope-value">{active_file_display.upper()}</span></div>',
     unsafe_allow_html=True,
 )
 
 # Sticker metric cards
-num_companies = len(companies) - 1
 st.markdown(
-    f"""
+    """
     <div class="ledger-row">
       <div class="ledger-card" style="--accent: var(--gold);">
-        <div class="ledger-label">Coverage</div>
-        <div class="ledger-value">{num_companies} Nifty 50 Cos.</div>
+        <div class="ledger-label">Workspace</div>
+        <div class="ledger-value">Secure RAM Isolation</div>
       </div>
       <div class="ledger-card" style="--accent: var(--cream);">
         <div class="ledger-label">Source Depth</div>
-        <div class="ledger-value">Reports + Concalls</div>
+        <div class="ledger-value">Dynamic Chunking</div>
       </div>
       <div class="ledger-card" style="--accent: var(--pink); color: var(--cream);">
         <div class="ledger-label">Grounding</div>
@@ -422,21 +364,21 @@ st.markdown(
 # Anchor target for the "OPEN TERMINAL" nav button
 st.markdown('<div id="chat-anchor"></div>', unsafe_allow_html=True)
 
-# Stop if custom upload is missing
-if company == "--- Upload Custom PDF ---" and custom_vectorstore is None:
+# Stop if no file is attached
+if st.session_state.custom_db is None:
     st.markdown(
         """
         <div class="empty-state">
           <div class="empty-icon">📎</div>
-          <div class="empty-title">Upload a filing to begin</div>
-          <div class="empty-sub">Drop a PDF in the sidebar — annual report, prospectus, or concall transcript — and ask it anything.</div>
+          <div class="empty-title">Attach a PDF in the sidebar to begin</div>
+          <div class="empty-sub">Drop a financial report, statement, or research document in the sidebar to initialize your secure session.</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
     st.stop()
 
-active_vectorstore = custom_vectorstore if company == "--- Upload Custom PDF ---" else base_vectorstore
+active_vectorstore = st.session_state.custom_db
 
 # ---------------------------------------------------------------------------
 # Chat
@@ -448,15 +390,19 @@ def render_sources(sources):
     with st.expander("📎 Verified sources"):
         stamps_html = "<div class='stamp-row'>"
         for src in sources:
+            doc_type = src.get('doc_type', 'document').upper()
+            year = src.get('year', '2026')
+            page_num = src.get('page_num', 'N/A')
             stamps_html += f"""
             <div class="stamp">
-              <div class="stamp-head">✓ {src['doc_type'].upper()} · {src['year']} · PG {src['page_num']}</div>
+              <div class="stamp-head">✓ {doc_type} · PG {page_num}</div>
             </div>
             """
         stamps_html += "</div>"
         st.markdown(stamps_html, unsafe_allow_html=True)
         for src in sources:
-            st.markdown(f"<div class='excerpt'>&ldquo;{src['excerpt']}…&rdquo;</div>", unsafe_allow_html=True)
+            excerpt = src.get('excerpt', '')
+            st.markdown(f"<div class='excerpt'>&ldquo;{excerpt}…&rdquo;</div>", unsafe_allow_html=True)
 
 
 if "messages" not in st.session_state:
@@ -471,18 +417,14 @@ for msg in st.session_state.messages:
         st.markdown(msg["content"])
         render_sources(msg.get("sources"))
 
-if user_prompt := st.chat_input("Ask a financial question..."):
+if user_prompt := st.chat_input("Ask a question about the attached document..."):
     st.session_state.messages.append({"role": "user", "content": user_prompt})
     with st.chat_message("user", avatar="🧑"):
         st.markdown("<div class='msg-tag msg-tag-user'>You</div>", unsafe_allow_html=True)
         st.markdown(user_prompt)
 
-    with st.spinner("Synthesizing financial records..."):
-        if company == "--- Upload Custom PDF ---":
-            results = active_vectorstore.similarity_search(query=user_prompt, k=5)
-        else:
-            results = active_vectorstore.similarity_search(query=user_prompt, k=5, filter={"company": company})
-
+    with st.spinner("Synthesizing document records..."):
+        results = active_vectorstore.similarity_search(query=user_prompt, k=5)
         context = "\n\n".join([doc.page_content for doc in results])
 
         system_prompt = f"""You are an expert financial research assistant.
@@ -504,7 +446,7 @@ Context:
         sources = [
             {
                 "page_num": doc.metadata.get("page_num"),
-                "doc_type": doc.metadata.get("doc_type", "report"),
+                "doc_type": doc.metadata.get("doc_type", "document"),
                 "year": doc.metadata.get("year", "2026"),
                 "excerpt": doc.page_content[:150].replace("\n", " ")
             }
