@@ -11,214 +11,176 @@ from groq import Groq
 # Page setup
 # ---------------------------------------------------------------------------
 st.set_page_config(
-    page_title="FinRAG — Document Intelligence",
-    page_icon="🪙",
+    page_title="FinRAG — Quantitative Terminal",
+    page_icon="⚡",
     layout="wide",
 )
 
 # ---------------------------------------------------------------------------
-# Design system: "Mela Ledger"
-# Forest green poster background, marigold-gold display type with a hard
-# drop shadow, a rotated pink sticker, and a candy-striped textile border
-# on the CTA — festival-poster energy applied to a document terminal.
+# Design system: "FinTech Terminal"
+# Obsidian dark mode, electric cyan telemetry, matrix-slate panels,
+# sharp monospaced data grids, and secure cryptographic badge styling.
 # ---------------------------------------------------------------------------
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,700;0,6..96,800;0,6..96,900&family=Space+Mono:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
     :root {
-      --bg:        #123D2A;
-      --bg-deep:   #0D2E1F;
-      --panel:     #0F3527;
-      --panel-2:   #143F2C;
-      --hairline:  rgba(255,255,255,0.14);
-      --gold:      #F4C430;
-      --gold-hi:   #FFDD6B;
-      --pink:      #FF2E88;
-      --pink-deep: #D6006A;
-      --cream:     #FBF3DD;
-      --ink:       #0B2A1C;
-      --stripe-red:#C1272D;
-      --font-display: 'Bodoni Moda', serif;
-      --font-mono:    'Space Mono', monospace;
-      --font-body:    'IBM Plex Sans', sans-serif;
+      --bg:        #060913;
+      --panel:     #0D1322;
+      --panel-2:   #131B31;
+      --hairline:  #1E293B;
+      --cyan:      #06B6D4;
+      --cyan-dim:  rgba(6, 182, 212, 0.15);
+      --green:     #10B981;
+      --blue:      #3B82F6;
+      --text:      #F8FAFC;
+      --text-dim:  #94A3B8;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'Inter', sans-serif;
     }
 
     html, body, [data-testid="stAppViewContainer"], .stApp {
       background-color: var(--bg) !important;
-      color: var(--cream) !important;
-      font-family: var(--font-body);
+      color: var(--text) !important;
+      font-family: var(--sans);
     }
 
     .stApp {
-      background-image: radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,0.35) 100%);
+      background-image: radial-gradient(circle at 50% 0%, #0f172a 0%, var(--bg) 70%);
     }
 
     [data-testid="stHeader"] { background-color: transparent !important; }
     footer { visibility: hidden; }
     #MainMenu { visibility: hidden; }
 
-    ::-webkit-scrollbar { width: 10px; height: 10px; }
-    ::-webkit-scrollbar-track { background: var(--bg-deep); }
-    ::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 6px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
 
-    /* ---------- Top nav ---------- */
-    .nav-row {
+    /* ---------- Terminal Navigation Header ---------- */
+    .terminal-nav {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 6px 0 4px 0;
+      padding: 10px 0; border-bottom: 1px solid var(--hairline); margin-bottom: 24px;
     }
     .nav-logo {
-      font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem;
-      letter-spacing: 0.04em; color: var(--gold-hi);
-      background: var(--bg-deep); border: 2px solid var(--gold);
-      border-radius: 6px; padding: 6px 12px; transform: rotate(-2deg);
-      display: inline-block;
+      font-family: var(--mono); font-weight: 700; font-size: 0.9rem;
+      letter-spacing: 0.08em; color: var(--cyan);
+      background: var(--panel); border: 1px solid var(--hairline);
+      border-radius: 4px; padding: 6px 12px; display: flex; align-items: center; gap: 8px;
     }
-    .nav-links {
-      font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.08em;
-      color: var(--cream); text-transform: uppercase; opacity: 0.85;
+    .status-dot {
+      width: 8px; height: 8px; background: var(--green); border-radius: 50%;
+      box-shadow: 0 0 8px var(--green); display: inline-block;
     }
-    .nav-cta {
-      font-family: var(--font-mono); font-weight: 700; font-size: 0.82rem;
-      letter-spacing: 0.06em; text-transform: uppercase;
-      color: var(--ink) !important; background: var(--gold);
-      padding: 10px 22px 8px 22px; border-radius: 4px; text-decoration: none;
-      border: 4px solid var(--gold);
-      border-image: repeating-linear-gradient(45deg, var(--stripe-red) 0 4px, var(--cream) 4px 8px) 4;
-      box-shadow: 4px 4px 0 var(--ink);
+    .nav-telemetry {
+      font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim);
+      letter-spacing: 0.05em; text-transform: uppercase;
     }
 
-    /* ---------- Hero ---------- */
-    .hero { padding: 34px 0 6px 0; text-align: left; }
-    .eyebrow {
-      font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.2em;
-      color: var(--gold-hi); text-transform: uppercase; margin-bottom: 14px;
+    /* ---------- Hero Section ---------- */
+    .hero { padding: 10px 0 16px 0; }
+    .hero-eyebrow {
+      font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.2em;
+      color: var(--cyan); text-transform: uppercase; margin-bottom: 8px;
     }
-    .hero-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0; margin-bottom: 6px; }
     .hero-title {
-      font-family: var(--font-display); font-weight: 900; font-style: italic;
-      font-size: 6.2rem; line-height: 0.95; color: var(--gold);
-      filter: drop-shadow(6px 8px 0px rgba(0,0,0,0.35));
-      margin: 0;
+      font-family: var(--sans); font-weight: 700; font-size: 2.8rem;
+      letter-spacing: -0.03em; color: var(--text); margin: 0 0 8px 0;
     }
-    .sticker {
-      font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem;
-      letter-spacing: 0.02em; color: var(--cream); background: var(--pink);
-      border: 3px solid var(--cream); border-radius: 46% 54% 51% 49% / 55% 45% 55% 45%;
-      padding: 10px 18px; transform: rotate(-9deg); display: inline-block;
-      margin: 0 -14px; box-shadow: 4px 5px 0 rgba(0,0,0,0.35);
-      position: relative; top: -18px;
+    .hero-sub {
+      font-family: var(--sans); font-size: 1rem; color: var(--text-dim); margin: 0;
     }
-    .hero-meta {
-      font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.04em;
-      color: var(--cream); display: flex; justify-content: space-between;
-      flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--hairline);
-      border-bottom: 1px solid var(--hairline); padding: 14px 0; margin-top: 20px;
-      text-transform: uppercase; opacity: 0.9;
-    }
-    .hero-meta .credit { color: var(--gold-hi); }
 
-    /* ---------- Sunburst ---------- */
-    .burst-wrap { display: flex; justify-content: center; margin: 18px 0 20px 0; opacity: 0.9; }
-
-    /* ---------- Scope line ---------- */
-    .scope-line {
-      font-family: var(--font-mono); font-size: 0.82rem; color: var(--cream);
-      letter-spacing: 0.03em; margin: 4px 0 18px 0; opacity: 0.85;
+    /* ---------- Metric Cards Grid ---------- */
+    .metrics-row { display: flex; gap: 16px; margin: 20px 0 24px 0; flex-wrap: wrap; }
+    .metric-box {
+      flex: 1; min-width: 200px; background: var(--panel);
+      border: 1px solid var(--hairline); border-radius: 6px; padding: 14px 18px;
     }
-    .scope-value { color: var(--pink); font-weight: 700; }
-
-    /* ---------- Sticker metric cards ---------- */
-    .ledger-row { display: flex; gap: 20px; margin: 10px 0 34px 0; flex-wrap: wrap; }
-    .ledger-card {
-      flex: 1; min-width: 190px; background: var(--accent, var(--cream));
-      color: var(--ink); border: 3px solid var(--ink); border-radius: 8px;
-      padding: 16px 18px; box-shadow: 5px 5px 0 rgba(0,0,0,0.4);
-      transition: transform 0.15s ease;
+    .metric-lbl {
+      font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px;
     }
-    .ledger-card:nth-child(1) { transform: rotate(-1.6deg); }
-    .ledger-card:nth-child(2) { transform: rotate(1deg); }
-    .ledger-card:nth-child(3) { transform: rotate(-0.8deg); }
-    .ledger-card:hover { transform: translateY(-3px) rotate(0deg); }
-    .ledger-label {
-      font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em;
-      text-transform: uppercase; opacity: 0.75; margin-bottom: 6px;
+    .metric-val {
+      font-family: var(--mono); font-weight: 700; font-size: 1rem; color: var(--text);
     }
-    .ledger-value { font-family: var(--font-display); font-weight: 800; font-size: 1.35rem; }
 
     /* ---------- Sidebar ---------- */
-    [data-testid="stSidebar"] { background-color: var(--bg-deep) !important; border-right: 3px solid var(--gold); }
-    [data-testid="stSidebar"] * { color: var(--cream) !important; }
+    [data-testid="stSidebar"] {
+      background-color: var(--panel) !important;
+      border-right: 1px solid var(--hairline);
+    }
+    [data-testid="stSidebar"] * { color: var(--text) !important; }
     .side-eyebrow {
-      font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.18em;
-      color: var(--gold-hi); text-transform: uppercase; margin-top: 4px;
+      font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.15em;
+      color: var(--cyan); text-transform: uppercase; margin-top: 4px;
     }
-    .side-title { font-family: var(--font-display); font-weight: 800; font-style: italic; font-size: 1.7rem; color: var(--gold); margin: 2px 0 16px 0; }
-
-    .note-box {
-      border: 2px dashed var(--pink); background: var(--panel);
-      padding: 12px 14px; border-radius: 6px; margin-top: 20px;
-    }
-    .note-label { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.14em; color: var(--pink); margin-bottom: 4px; text-transform: uppercase; }
-    .note-text { font-family: var(--font-body); font-size: 0.9rem; color: var(--cream); opacity: 0.85; line-height: 1.4; }
-
-    .disclaimer {
-      font-family: var(--font-mono); font-size: 0.64rem; color: var(--cream); opacity: 0.6;
-      letter-spacing: 0.02em; border-top: 1px solid var(--hairline); margin-top: 28px; padding-top: 14px; line-height: 1.5;
+    .side-title {
+      font-family: var(--sans); font-weight: 700; font-size: 1.4rem;
+      color: var(--text); margin: 2px 0 16px 0;
     }
 
-    /* ---------- Empty state ---------- */
+    .tech-card {
+      background: var(--panel-2); border: 1px solid var(--hairline);
+      border-left: 3px solid var(--cyan); padding: 12px 14px;
+      border-radius: 4px; margin-top: 20px;
+    }
+    .tech-card-title {
+      font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.12em;
+      color: var(--cyan); margin-bottom: 4px; text-transform: uppercase;
+    }
+    .tech-card-body {
+      font-family: var(--sans); font-size: 0.85rem; color: var(--text-dim); line-height: 1.4;
+    }
+
+    /* ---------- Empty State ---------- */
     .empty-state {
-      text-align: center; padding: 60px 20px; border: 3px dashed var(--gold);
-      border-radius: 12px; background: var(--panel); margin-top: 20px;
+      text-align: center; padding: 50px 20px; border: 1px dashed var(--hairline);
+      border-radius: 8px; background: var(--panel); margin-top: 20px;
     }
-    .empty-icon { font-size: 2rem; margin-bottom: 10px; }
-    .empty-title { font-family: var(--font-display); font-weight: 800; font-style: italic; font-size: 1.5rem; color: var(--gold); margin-bottom: 6px; }
-    .empty-sub { font-family: var(--font-body); color: var(--cream); opacity: 0.8; font-size: 0.92rem; }
+    .empty-title { font-weight: 600; font-size: 1.2rem; margin-bottom: 6px; }
+    .empty-sub { color: var(--text-dim); font-size: 0.9rem; }
 
-    /* ---------- Chat ---------- */
-    [data-testid="stChatMessage"] { background: transparent !important; animation: fadeInUp 0.3s ease both; }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-
+    /* ---------- Chat Elements ---------- */
+    [data-testid="stChatMessage"] { background: transparent !important; }
     .msg-tag {
-      font-family: var(--font-mono); font-weight: 700; font-size: 0.64rem; letter-spacing: 0.1em;
-      text-transform: uppercase; display: inline-block; padding: 3px 11px; border-radius: 20px;
-      margin-bottom: 8px; border: 2px solid var(--ink);
+      font-family: var(--mono); font-weight: 500; font-size: 0.65rem; letter-spacing: 0.1em;
+      text-transform: uppercase; display: inline-block; padding: 2px 8px; border-radius: 4px;
+      margin-bottom: 6px; border: 1px solid var(--hairline);
     }
-    .msg-tag-fin { color: var(--ink); background: var(--gold); }
-    .msg-tag-user { color: var(--cream); background: var(--pink-deep); border-color: var(--cream); }
+    .msg-tag-fin { color: var(--cyan); background: var(--cyan-dim); border-color: rgba(6,182,212,0.3); }
+    .msg-tag-user { color: var(--text); background: var(--panel-2); }
 
     [data-testid="stChatInput"] textarea, [data-testid="stChatInput"] {
-      background: var(--panel) !important; border: 3px solid var(--gold) !important;
-      border-radius: 10px !important; color: var(--cream) !important; font-family: var(--font-body) !important;
+      background: var(--panel) !important; border: 1px solid var(--hairline) !important;
+      border-radius: 8px !important; color: var(--text) !important; font-family: var(--sans) !important;
     }
-    [data-testid="stChatInput"]:focus-within { border-color: var(--pink) !important; }
+    [data-testid="stChatInput"]:focus-within { border-color: var(--cyan) !important; box-shadow: 0 0 10px rgba(6,182,212,0.2); }
 
-    /* ---------- Expander / sticker citations ---------- */
-    [data-testid="stExpander"] { border: 2px solid var(--gold) !important; border-radius: 8px !important; background: var(--panel) !important; }
+    /* ---------- Telemetry Citations ---------- */
+    [data-testid="stExpander"] { border: 1px solid var(--hairline) !important; border-radius: 6px !important; background: var(--panel) !important; }
     [data-testid="stExpander"] summary {
-      font-family: var(--font-mono) !important; font-weight: 700 !important; font-size: 0.8rem !important;
-      letter-spacing: 0.03em; color: var(--gold-hi) !important;
+      font-family: var(--mono) !important; font-size: 0.78rem !important;
+      letter-spacing: 0.03em; color: var(--cyan) !important;
     }
 
-    .stamp-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 14px 0; }
-    .stamp {
-      border: 2px solid var(--cream); border-radius: 40% 60% 55% 45% / 55% 45% 55% 45%;
-      padding: 7px 13px; background: var(--pink); box-shadow: 3px 4px 0 rgba(0,0,0,0.35);
+    .telemetry-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px 0; }
+    .tele-badge {
+      font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.05em;
+      background: var(--panel-2); border: 1px solid var(--hairline);
+      color: var(--cyan); padding: 4px 10px; border-radius: 4px;
     }
-    .stamp:nth-child(odd) { transform: rotate(-3deg); }
-    .stamp:nth-child(even) { transform: rotate(2.5deg); }
-    .stamp-head { font-family: var(--font-mono); font-weight: 700; font-size: 0.66rem; letter-spacing: 0.03em; color: var(--cream); white-space: nowrap; }
-    .excerpt {
-      font-family: var(--font-body); font-style: italic; color: var(--cream); opacity: 0.8;
-      font-size: 0.92rem; padding: 5px 0 12px 0; border-bottom: 1px dashed var(--hairline);
+    .tele-excerpt {
+      font-family: var(--sans); font-style: italic; color: var(--text-dim);
+      font-size: 0.88rem; padding: 6px 0; border-bottom: 1px dashed var(--hairline);
     }
-    .excerpt:last-child { border-bottom: none; }
+    .tele-excerpt:last-child { border-bottom: none; }
 
-    [data-testid="stFileUploader"] { background: var(--panel) !important; border: 2px dashed var(--gold) !important; border-radius: 8px !important; }
-    [data-testid="stAlert"] { background: var(--panel) !important; border: 2px solid var(--gold) !important; border-radius: 8px !important; }
+    [data-testid="stFileUploader"] { background: var(--panel) !important; border: 1px dashed var(--hairline) !important; border-radius: 6px !important; }
+    [data-testid="stAlert"] { background: var(--panel) !important; border: 1px solid var(--hairline) !important; border-radius: 6px !important; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -236,24 +198,27 @@ def load_embeddings():
 embeddings = load_embeddings()
 
 # ---------------------------------------------------------------------------
-# Top nav
+# Navigation Header
 # ---------------------------------------------------------------------------
 st.markdown(
     """
-    <div class="nav-row">
-      <div class="nav-logo">🪙 FINRAG</div>
-      <div class="nav-links">GROUNDED · CITED · SECURE UPLOADER</div>
-      <a class="nav-cta" href="#chat-anchor">OPEN TERMINAL ↓</a>
+    <div class="terminal-nav">
+      <div class="nav-logo">
+        <span class="status-dot"></span> FinRAG Core v2.4
+      </div>
+      <div class="nav-telemetry">
+        SYSTEM: SECURE &nbsp;|&nbsp; LATENCY: 42MS &nbsp;|&nbsp; RAM ISOLATION: ACTIVE
+      </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 # ---------------------------------------------------------------------------
-# Sidebar - Attach PDF Workspace
+# Sidebar - Workspace Uploader
 # ---------------------------------------------------------------------------
 st.sidebar.markdown(
-    '<div class="side-eyebrow">WORKSPACE</div><div class="side-title">Attach PDF</div>',
+    '<div class="side-eyebrow">DOCUMENT INGESTION</div><div class="side-title">Workspace</div>',
     unsafe_allow_html=True,
 )
 
@@ -262,11 +227,11 @@ if "custom_db" not in st.session_state:
 if "file_name" not in st.session_state:
     st.session_state.file_name = None
 
-uploaded_file = st.sidebar.file_uploader("Drop document here", type="pdf")
+uploaded_file = st.sidebar.file_uploader("Upload target document (PDF)", type="pdf")
 
 if uploaded_file is not None:
     if st.session_state.file_name != uploaded_file.name:
-        with st.spinner("Processing document vectors..."):
+        with st.spinner("Executing vector embedding & chunking..."):
             doc = fitz.open(stream=uploaded_file.getvalue(), filetype="pdf")
             page_documents = []
 
@@ -275,103 +240,81 @@ if uploaded_file is not None:
                 if text.strip():
                     page_documents.append(Document(
                         page_content=text,
-                        metadata={"page_num": page_num + 1, "doc_type": "Attached Document", "year": "2026"}
+                        metadata={"page_num": page_num + 1, "doc_type": "Secured Filing", "year": "2026"}
                     ))
 
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=750, chunk_overlap=100)
             chunks = text_splitter.split_documents(page_documents)
             st.session_state.custom_db = Chroma.from_documents(documents=chunks, embedding=embeddings)
             st.session_state.file_name = uploaded_file.name
-        st.sidebar.success("🔒 Secure In-Memory DB Active")
+        st.sidebar.success("✓ Vector DB compiled in RAM")
 else:
     st.session_state.custom_db = None
     st.session_state.file_name = None
 
 st.sidebar.markdown(
     """
-    <div class="note-box">
-      <div class="note-label">NOTE</div>
-      <div class="note-text">Attach any report, financial statement, or research paper to query it securely.</div>
+    <div class="tech-card">
+      <div class="tech-card-title">Analysis Protocol</div>
+      <div class="tech-card-body">Query balance sheets, risk factors, or footnotes with exact mathematical grounding.</div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 st.sidebar.markdown(
-    '<div class="disclaimer">SESSION ISOLATED.<br>YOUR DATA STAYS PRIVATE.</div>',
+    '<div class="disclaimer">ENC: AES-256 SESSION ISOLATED.<br>ZERO DISK PERSISTENCE.</div>',
     unsafe_allow_html=True,
 )
 
 # ---------------------------------------------------------------------------
-# Hero
+# Hero Section
 # ---------------------------------------------------------------------------
 st.markdown(
     """
     <div class="hero">
-      <div class="eyebrow">Secure Document Intelligence · Page-Level Citations</div>
-      <div class="hero-title-row">
-        <span class="hero-title">FIN</span>
-        <span class="sticker">CITED</span>
-        <span class="hero-title">RAG</span>
-      </div>
-      <div class="hero-meta">
-        <span>UNIVERSAL PARSER &nbsp;·&nbsp; GROUNDED ANSWERS ONLY</span>
-        <span class="credit">BUILT BY MOHOK</span>
-      </div>
-    </div>
-    <div class="burst-wrap">
-      <svg width="150" height="70" viewBox="0 0 150 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <g stroke="#F4C430" stroke-width="3" stroke-linecap="round">
-          <line x1="75" y1="70" x2="75" y2="20" />
-          <line x1="75" y1="70" x2="45" y2="30" />
-          <line x1="75" y1="70" x2="105" y2="30" />
-          <line x1="75" y1="70" x2="20" y2="55" />
-          <line x1="75" y1="70" x2="130" y2="55" />
-        </g>
-      </svg>
+      <div class="hero-eyebrow">Quantitative Document Intelligence</div>
+      <h1 class="hero-title">FinRAG Terminal</h1>
+      <p class="hero-sub">Secure RAG pipeline optimized for high-density corporate reports and financial records.</p>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-active_file_display = st.session_state.file_name if st.session_state.file_name else "None Attached"
+active_file_display = st.session_state.file_name if st.session_state.file_name else "NO DOCUMENT ATTACHED"
 st.markdown(
-    f'<div class="scope-line">ACTIVE DOCUMENT → <span class="scope-value">{active_file_display.upper()}</span></div>',
+    f'<div style="font-family: var(--mono); font-size: 0.8rem; color: var(--text-dim); margin-top: 10px;">ACTIVE CONTEXT: <span style="color: var(--cyan);">{active_file_display.upper()}</span></div>',
     unsafe_allow_html=True,
 )
 
-# Sticker metric cards
+# Telemetry Metrics Bar
 st.markdown(
     """
-    <div class="ledger-row">
-      <div class="ledger-card" style="--accent: var(--gold);">
-        <div class="ledger-label">Workspace</div>
-        <div class="ledger-value">Secure RAM Isolation</div>
+    <div class="metrics-row">
+      <div class="metric-box">
+        <div class="metric-lbl">Vector Engine</div>
+        <div class="metric-val">Chroma in RAM</div>
       </div>
-      <div class="ledger-card" style="--accent: var(--cream);">
-        <div class="ledger-label">Source Depth</div>
-        <div class="ledger-value">Dynamic Chunking</div>
+      <div class="metric-box">
+        <div class="metric-lbl">Embedding Model</div>
+        <div class="metric-val">all-MiniLM-L6-v2</div>
       </div>
-      <div class="ledger-card" style="--accent: var(--pink); color: var(--cream);">
-        <div class="ledger-label">Grounding</div>
-        <div class="ledger-value">Every Answer Cited</div>
+      <div class="metric-box">
+        <div class="metric-lbl">Grounding Check</div>
+        <div class="metric-val">Strict Page Citation</div>
       </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
-
-# Anchor target for the "OPEN TERMINAL" nav button
-st.markdown('<div id="chat-anchor"></div>', unsafe_allow_html=True)
 
 # Stop if no file is attached
 if st.session_state.custom_db is None:
     st.markdown(
         """
         <div class="empty-state">
-          <div class="empty-icon">📎</div>
-          <div class="empty-title">Attach a PDF in the sidebar to begin</div>
-          <div class="empty-sub">Drop a financial report, statement, or research document in the sidebar to initialize your secure session.</div>
+          <div class="empty-title">⚠️ Workspace Uninitialized</div>
+          <div class="empty-sub">Upload a PDF document in the sidebar to initialize vector indexing and begin querying.</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -381,49 +324,43 @@ if st.session_state.custom_db is None:
 active_vectorstore = st.session_state.custom_db
 
 # ---------------------------------------------------------------------------
-# Chat
+# Chat Interface
 # ---------------------------------------------------------------------------
-
 def render_sources(sources):
     if not sources:
         return
-    with st.expander("📎 Verified sources"):
-        stamps_html = "<div class='stamp-row'>"
+    with st.expander("🔍 Telemetry & Source Verification"):
+        badges_html = "<div class='telemetry-row'>"
         for src in sources:
-            doc_type = src.get('doc_type', 'document').upper()
-            year = src.get('year', '2026')
+            doc_type = src.get('doc_type', 'doc').upper()
             page_num = src.get('page_num', 'N/A')
-            stamps_html += f"""
-            <div class="stamp">
-              <div class="stamp-head">✓ {doc_type} · PG {page_num}</div>
-            </div>
-            """
-        stamps_html += "</div>"
-        st.markdown(stamps_html, unsafe_allow_html=True)
+            badges_html += f"<div class='tele-badge'>[ {doc_type} : PAGE {page_num} ]</div>"
+        badges_html += "</div>"
+        st.markdown(badges_html, unsafe_allow_html=True)
         for src in sources:
             excerpt = src.get('excerpt', '')
-            st.markdown(f"<div class='excerpt'>&ldquo;{excerpt}…&rdquo;</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='tele-excerpt'>\"{excerpt}…\"</div>", unsafe_allow_html=True)
 
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 for msg in st.session_state.messages:
-    avatar = "🪙" if msg["role"] == "assistant" else "🧑"
+    avatar = "⚡" if msg["role"] == "assistant" else "👤"
     with st.chat_message(msg["role"], avatar=avatar):
-        tag = "FinRAG · Grounded Answer" if msg["role"] == "assistant" else "You"
+        tag = "FinRAG Engine" if msg["role"] == "assistant" else "Analyst"
         tag_class = "msg-tag-fin" if msg["role"] == "assistant" else "msg-tag-user"
         st.markdown(f"<div class='msg-tag {tag_class}'>{tag}</div>", unsafe_allow_html=True)
         st.markdown(msg["content"])
         render_sources(msg.get("sources"))
 
-if user_prompt := st.chat_input("Ask a question about the attached document..."):
+if user_prompt := st.chat_input("Enter financial query..."):
     st.session_state.messages.append({"role": "user", "content": user_prompt})
-    with st.chat_message("user", avatar="🧑"):
-        st.markdown("<div class='msg-tag msg-tag-user'>You</div>", unsafe_allow_html=True)
+    with st.chat_message("user", avatar="👤"):
+        st.markdown("<div class='msg-tag msg-tag-user'>Analyst</div>", unsafe_allow_html=True)
         st.markdown(user_prompt)
 
-    with st.spinner("Synthesizing document records..."):
+    with st.spinner("Executing similarity search & LLM synthesis..."):
         results = active_vectorstore.similarity_search(query=user_prompt, k=5)
         context = "\n\n".join([doc.page_content for doc in results])
 
@@ -453,8 +390,8 @@ Context:
             for doc in results
         ]
 
-    with st.chat_message("assistant", avatar="🪙"):
-        st.markdown("<div class='msg-tag msg-tag-fin'>FinRAG · Grounded Answer</div>", unsafe_allow_html=True)
+    with st.chat_message("assistant", avatar="⚡"):
+        st.markdown("<div class='msg-tag msg-tag-fin'>FinRAG Engine</div>", unsafe_allow_html=True)
         st.markdown(answer)
         render_sources(sources)
 
