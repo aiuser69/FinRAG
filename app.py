@@ -16,9 +16,13 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------------------------
+# App Routing State
+# ---------------------------------------------------------------------------
+# Read the current page from the URL (defaults to "home")
+current_page = st.query_params.get("nav", "home")
+
+# ---------------------------------------------------------------------------
 # Design system: Enterprise Dashboard
-# Sharp borders, muted slate colors, standard top navigation, 
-# and highly structured content blocks.
 # ---------------------------------------------------------------------------
 st.markdown(
     """
@@ -51,23 +55,25 @@ st.markdown(
       align-items: center;
       background-color: var(--surface-color);
       border-bottom: 1px solid var(--border-color);
-      padding: 12px 32px;
-      margin: -3rem -3rem 2rem -3rem; /* Offset Streamlit default padding */
+      padding: 0 32px;
+      margin: -3rem -3rem 2rem -3rem; 
       position: sticky;
       top: 0;
       z-index: 999;
+      height: 60px;
     }
     .nav-brand {
       font-weight: 700;
       font-size: 1.1rem;
       letter-spacing: 0.05em;
       color: var(--text-primary);
-      margin-right: 32px;
+      margin-right: 48px;
       text-transform: uppercase;
     }
     .nav-links {
       display: flex;
-      gap: 24px;
+      gap: 32px;
+      height: 100%;
     }
     .nav-links a {
       color: var(--text-secondary);
@@ -76,10 +82,18 @@ st.markdown(
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      transition: color 0.2s ease;
+      display: flex;
+      align-items: center;
+      height: 100%;
+      border-bottom: 2px solid transparent;
+      transition: color 0.2s ease, border-color 0.2s ease;
     }
     .nav-links a:hover {
       color: var(--text-primary);
+    }
+    .nav-links a.active {
+      color: var(--text-primary);
+      border-bottom: 2px solid var(--accent-color);
     }
 
     /* ---------- Typography & Layout ---------- */
@@ -102,7 +116,7 @@ st.markdown(
       color: var(--text-primary);
       border-bottom: 1px solid var(--border-color);
       padding-bottom: 8px;
-      margin: 2rem 0 1rem 0;
+      margin: 1rem 0 1rem 0;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
@@ -221,15 +235,16 @@ def load_embeddings():
 embeddings = load_embeddings()
 
 # ---------------------------------------------------------------------------
-# Top Navigation Bar
+# Top Navigation Bar (Dynamic Active State)
 # ---------------------------------------------------------------------------
 st.markdown(
-    """
+    f"""
     <div class="top-nav">
       <div class="nav-brand">FinRAG Terminal</div>
       <div class="nav-links">
-        <a href="#about">About</a>
-        <a href="#instructions">Instructions</a>
+        <a href="/?nav=home" target="_self" class="{'active' if current_page == 'home' else ''}">Terminal</a>
+        <a href="/?nav=about" target="_self" class="{'active' if current_page == 'about' else ''}">About</a>
+        <a href="/?nav=instructions" target="_self" class="{'active' if current_page == 'instructions' else ''}">Instructions</a>
       </div>
     </div>
     """,
@@ -237,7 +252,7 @@ st.markdown(
 )
 
 # ---------------------------------------------------------------------------
-# Sidebar - Document Upload
+# Sidebar - Document Upload (Always Visible)
 # ---------------------------------------------------------------------------
 st.sidebar.markdown('<div class="sidebar-header">Data Ingestion</div>', unsafe_allow_html=True)
 
@@ -281,126 +296,126 @@ st.sidebar.markdown(
     unsafe_allow_html=True,
 )
 
-
-# ---------------------------------------------------------------------------
-# Main Area - Info Sections & Chat
-# ---------------------------------------------------------------------------
-st.markdown('<div class="page-header">Document Intelligence Engine</div>', unsafe_allow_html=True)
-st.markdown('<div class="page-subheader">Secure Retrieval-Augmented Generation (RAG) for analytical processing.</div>', unsafe_allow_html=True)
-
-# Anchor for About
-st.markdown('<div id="about" class="section-title">About</div>', unsafe_allow_html=True)
-st.markdown(
-    """
-    <div class="section-text">
-      FinRAG is an enterprise-grade document analysis terminal designed to extract and synthesize information from dense financial filings, reports, and documentation. Utilizing localized vector embeddings and advanced language modeling, it ensures all outputs are strictly grounded in the provided source material to prevent data hallucination.
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# Anchor for Instructions
-st.markdown('<div id="instructions" class="section-title">Instructions</div>', unsafe_allow_html=True)
-st.markdown(
-    """
-    <ol class="instruction-list">
-      <li><strong>Ingest Document:</strong> Utilize the sidebar module to upload a target PDF file.</li>
-      <li><strong>Vector Processing:</strong> Allow the system to autonomously chunk and embed the document content into the active session memory.</li>
-      <li><strong>Execute Query:</strong> Input specific, targeted questions into the terminal interface below.</li>
-      <li><strong>Audit Trail:</strong> Review the system's generated response and expand the "Audit Verification" panel to confirm page-level source citations.</li>
-    </ol>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown('<div style="margin-top: 3rem;"></div>', unsafe_allow_html=True)
-
-# Stop if no file is attached
-if st.session_state.custom_db is None:
-    st.warning("SYSTEM HALT: Target document required for analysis. Please upload a file via the sidebar to proceed.")
-    st.stop()
-
-# Active Document Indicator
-st.markdown(
-    f"""
-    <div style="background: var(--surface-color); border: 1px solid var(--border-color); padding: 12px 16px; border-radius: 4px; margin-bottom: 2rem; font-size: 0.85rem;">
-      <span style="color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Active Target File:</span> 
-      <strong style="color: var(--text-primary); margin-left: 8px;">{st.session_state.file_name}</strong>
-    </div>
-    """, 
-    unsafe_allow_html=True
-)
-
 active_vectorstore = st.session_state.custom_db
 
 
 # ---------------------------------------------------------------------------
-# Chat Interface
+# Page Routing Logic
 # ---------------------------------------------------------------------------
-def render_sources(sources):
-    if not sources:
-        return
-    with st.expander("VIEW AUDIT VERIFICATION"):
-        for src in sources:
-            page_num = src.get('page_num', 'N/A')
-            st.markdown(f"<div class='citation-badge'>PAGE {page_num}</div>", unsafe_allow_html=True)
-            excerpt = src.get('excerpt', '')
-            st.markdown(f"<div class='citation-text'>\"{excerpt}...\"</div>", unsafe_allow_html=True)
 
+if current_page == "about":
+    # ---------------- ABOUT PAGE ----------------
+    st.markdown('<div class="page-header">About FinRAG</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">System Overview</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="section-text">
+          FinRAG is an enterprise-grade document analysis terminal designed to extract and synthesize information from dense financial filings, reports, and documentation. Utilizing localized vector embeddings and advanced language modeling, it ensures all outputs are strictly grounded in the provided source material to prevent data hallucination.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
+elif current_page == "instructions":
+    # ---------------- INSTRUCTIONS PAGE ----------------
+    st.markdown('<div class="page-header">User Instructions</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Standard Operating Procedure</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <ol class="instruction-list">
+          <li><strong>Ingest Document:</strong> Utilize the sidebar module to upload a target PDF file.</li>
+          <li><strong>Vector Processing:</strong> Allow the system to autonomously chunk and embed the document content into the active session memory.</li>
+          <li><strong>Execute Query:</strong> Navigate back to the 'Terminal' tab and input specific, targeted questions into the interface.</li>
+          <li><strong>Audit Trail:</strong> Review the system's generated response and expand the "Audit Verification" panel to confirm page-level source citations.</li>
+        </ol>
+        """,
+        unsafe_allow_html=True
+    )
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+else:
+    # ---------------- MAIN TERMINAL PAGE ----------------
+    st.markdown('<div class="page-header">FinRAG - Financial Intelligence Terminal</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-subheader">Secure Retrieval-Augmented Generation (RAG) for analytical processing.</div>', unsafe_allow_html=True)
 
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        label_class = "system" if msg["role"] == "assistant" else "user"
-        label = "FinRAG System" if msg["role"] == "assistant" else "Analyst"
-        st.markdown(f"<div class='msg-label {label_class}'>{label}</div>", unsafe_allow_html=True)
-        
-        st.markdown(msg["content"])
-        render_sources(msg.get("sources"))
+    # Stop if no file is attached
+    if st.session_state.custom_db is None:
+        st.warning("SYSTEM HALT: Target document required for analysis. Please upload a file via the sidebar to proceed.")
+        st.stop()
 
-if user_prompt := st.chat_input("Enter query parameter..."):
-    st.session_state.messages.append({"role": "user", "content": user_prompt})
-    with st.chat_message("user"):
-        st.markdown("<div class='msg-label user'>Analyst</div>", unsafe_allow_html=True)
-        st.markdown(user_prompt)
+    # Active Document Indicator
+    st.markdown(
+        f"""
+        <div style="background: var(--surface-color); border: 1px solid var(--border-color); padding: 12px 16px; border-radius: 4px; margin-bottom: 2rem; font-size: 0.85rem;">
+          <span style="color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Active Target File:</span> 
+          <strong style="color: var(--text-primary); margin-left: 8px;">{st.session_state.file_name}</strong>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
 
-    with st.spinner("Executing retrieval sequence..."):
-        results = active_vectorstore.similarity_search(query=user_prompt, k=5)
-        context = "\n\n".join([doc.page_content for doc in results])
+    def render_sources(sources):
+        if not sources:
+            return
+        with st.expander("VIEW AUDIT VERIFICATION"):
+            for src in sources:
+                page_num = src.get('page_num', 'N/A')
+                st.markdown(f"<div class='citation-badge'>PAGE {page_num}</div>", unsafe_allow_html=True)
+                excerpt = src.get('excerpt', '')
+                st.markdown(f"<div class='citation-text'>\"{excerpt}...\"</div>", unsafe_allow_html=True)
 
-        system_prompt = f"""You are a strict, professional financial research assistant.
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            label_class = "system" if msg["role"] == "assistant" else "user"
+            label = "FinRAG System" if msg["role"] == "assistant" else "Analyst"
+            st.markdown(f"<div class='msg-label {label_class}'>{label}</div>", unsafe_allow_html=True)
+            
+            st.markdown(msg["content"])
+            render_sources(msg.get("sources"))
+
+    if user_prompt := st.chat_input("Enter query parameter..."):
+        st.session_state.messages.append({"role": "user", "content": user_prompt})
+        with st.chat_message("user"):
+            st.markdown("<div class='msg-label user'>Analyst</div>", unsafe_allow_html=True)
+            st.markdown(user_prompt)
+
+        with st.spinner("Executing retrieval sequence..."):
+            results = active_vectorstore.similarity_search(query=user_prompt, k=5)
+            context = "\n\n".join([doc.page_content for doc in results])
+
+            system_prompt = f"""You are a strict, professional financial research assistant.
 Answer ONLY using the provided context. If the context does not contain the answer, explicitly state:
 "Data not found in the provided document." Do not hallucinate or use outside knowledge. Use a formal, objective tone.
 
 Context:
 {context}"""
 
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            model="openai/gpt-oss-20b",
-        )
-        answer = chat_completion.choices[0].message.content
+            chat_completion = client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                model="openai/gpt-oss-20b",
+            )
+            answer = chat_completion.choices[0].message.content
 
-        sources = [
-            {
-                "page_num": doc.metadata.get("page_num"),
-                "excerpt": doc.page_content[:150].replace("\n", " ")
-            }
-            for doc in results
-        ]
+            sources = [
+                {
+                    "page_num": doc.metadata.get("page_num"),
+                    "excerpt": doc.page_content[:150].replace("\n", " ")
+                }
+                for doc in results
+            ]
 
-    with st.chat_message("assistant"):
-        st.markdown("<div class='msg-label system'>FinRAG System</div>", unsafe_allow_html=True)
-        st.markdown(answer)
-        render_sources(sources)
+        with st.chat_message("assistant"):
+            st.markdown("<div class='msg-label system'>FinRAG System</div>", unsafe_allow_html=True)
+            st.markdown(answer)
+            render_sources(sources)
 
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": answer,
-        "sources": sources
-    })
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": answer,
+            "sources": sources
+        })
