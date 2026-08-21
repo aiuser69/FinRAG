@@ -11,15 +11,14 @@ from groq import Groq
 # Page setup
 # ---------------------------------------------------------------------------
 st.set_page_config(
-    page_title="FinRAG Workspace",
-    page_icon="✨",
+    page_title="FinRAG | Document Intelligence",
     layout="wide",
 )
 
 # ---------------------------------------------------------------------------
-# Design system: Modern Minimalist SaaS
-# Soft dark backgrounds, clean card layouts, readable sans-serif typography,
-# and elegant blue accents. No fake tech jargon.
+# Design system: Enterprise Dashboard
+# Sharp borders, muted slate colors, standard top navigation, 
+# and highly structured content blocks.
 # ---------------------------------------------------------------------------
 st.markdown(
     """
@@ -27,162 +26,183 @@ st.markdown(
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
     :root {
-      --bg:         #0B0F19; /* Deep modern navy/black */
-      --card-bg:    #111827; /* Slightly lighter card background */
-      --card-alt:   #1F2937; /* Hover or alternate card */
-      --border:     #374151;
-      --accent:     #3B82F6; /* Clean modern blue */
-      --accent-dim: rgba(59, 130, 246, 0.1);
-      --text-main:  #F9FAFB;
-      --text-muted: #9CA3AF;
-      --font:       'Inter', sans-serif;
+      --bg-color: #0F111A;
+      --surface-color: #161A23;
+      --border-color: #2D3342;
+      --text-primary: #E2E8F0;
+      --text-secondary: #94A3B8;
+      --accent-color: #2563EB;
+      --font-family: 'Inter', sans-serif;
     }
 
     html, body, [data-testid="stAppViewContainer"], .stApp {
-      background-color: var(--bg) !important;
-      color: var(--text-main) !important;
-      font-family: var(--font) !important;
+      background-color: var(--bg-color) !important;
+      color: var(--text-primary) !important;
+      font-family: var(--font-family) !important;
     }
 
-    [data-testid="stHeader"] { background-color: transparent !important; }
+    [data-testid="stHeader"] { display: none !important; }
     footer { visibility: hidden; }
     #MainMenu { visibility: hidden; }
 
-    /* ---------- Headers & Titles ---------- */
-    .main-title {
-      font-weight: 700;
-      font-size: 2.5rem;
-      letter-spacing: -0.02em;
-      color: var(--text-main);
-      margin-bottom: 0.2rem;
-    }
-    .sub-title {
-      font-size: 1.1rem;
-      color: var(--text-muted);
-      margin-bottom: 2rem;
-      font-weight: 400;
-    }
-    
-    /* ---------- Instructions Card ---------- */
-    .instructions-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
-    .instructions-card h3 {
-      margin-top: 0;
-      color: var(--text-main);
-      font-size: 1.25rem;
-      font-weight: 600;
+    /* ---------- Top Navigation Bar ---------- */
+    .top-nav {
       display: flex;
       align-items: center;
-      gap: 8px;
+      background-color: var(--surface-color);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 32px;
+      margin: -3rem -3rem 2rem -3rem; /* Offset Streamlit default padding */
+      position: sticky;
+      top: 0;
+      z-index: 999;
     }
-    .instructions-list {
-      color: var(--text-muted);
+    .nav-brand {
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.05em;
+      color: var(--text-primary);
+      margin-right: 32px;
+      text-transform: uppercase;
+    }
+    .nav-links {
+      display: flex;
+      gap: 24px;
+    }
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: color 0.2s ease;
+    }
+    .nav-links a:hover {
+      color: var(--text-primary);
+    }
+
+    /* ---------- Typography & Layout ---------- */
+    .page-header {
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    .page-subheader {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 2.5rem;
+    }
+    
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+      margin: 2rem 0 1rem 0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .section-text {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
       line-height: 1.6;
-      margin-bottom: 0;
+    }
+
+    /* ---------- Ordered List for Instructions ---------- */
+    ol.instruction-list {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.7;
       padding-left: 20px;
     }
-    .instructions-list li { margin-bottom: 8px; }
-    .instructions-list strong { color: var(--text-main); }
+    ol.instruction-list li strong {
+      color: var(--text-primary);
+    }
 
     /* ---------- Sidebar ---------- */
     [data-testid="stSidebar"] {
-      background-color: var(--card-bg) !important;
-      border-right: 1px solid var(--border);
+      background-color: var(--surface-color) !important;
+      border-right: 1px solid var(--border-color);
     }
-    [data-testid="stSidebar"] * { color: var(--text-main) !important; }
+    [data-testid="stSidebar"] * { color: var(--text-primary) !important; }
     
-    .sidebar-title {
+    .sidebar-header {
+      font-size: 0.85rem;
       font-weight: 600;
-      font-size: 1.2rem;
-      color: var(--text-main);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
       margin-bottom: 1rem;
     }
-
-    .privacy-note {
-      background: var(--accent-dim);
-      border-left: 4px solid var(--accent);
-      padding: 12px 16px;
-      border-radius: 4px 8px 8px 4px;
-      margin-top: 24px;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-    .privacy-note strong { color: var(--accent); }
 
     /* ---------- Chat Elements ---------- */
     [data-testid="stChatMessage"] { 
       background: transparent !important; 
-      padding: 1rem 0;
+      border-bottom: 1px solid rgba(45, 51, 66, 0.5);
+      padding: 1.5rem 0;
     }
-    .msg-avatar {
-      background: var(--card-alt);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 4px 8px;
-      font-size: 0.8rem;
+    .msg-label {
+      font-size: 0.75rem;
       font-weight: 600;
-      color: var(--text-muted);
-      display: inline-block;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
       margin-bottom: 8px;
     }
-    .msg-avatar.ai { color: var(--accent); background: var(--accent-dim); border-color: var(--accent); }
+    .msg-label.system { color: var(--accent-color); }
 
     [data-testid="stChatInput"] textarea, [data-testid="stChatInput"] {
-      background: var(--card-bg) !important; 
-      border: 1px solid var(--border) !important;
-      border-radius: 12px !important; 
-      color: var(--text-main) !important; 
+      background: var(--surface-color) !important; 
+      border: 1px solid var(--border-color) !important;
+      border-radius: 4px !important; 
+      color: var(--text-primary) !important; 
     }
     [data-testid="stChatInput"]:focus-within { 
-      border-color: var(--accent) !important; 
-      box-shadow: 0 0 0 2px var(--accent-dim) !important; 
+      border-color: var(--accent-color) !important; 
     }
 
     /* ---------- Citations / Expanders ---------- */
     [data-testid="stExpander"] { 
-      border: 1px solid var(--border) !important; 
-      border-radius: 8px !important; 
-      background: var(--card-bg) !important; 
-      margin-top: 12px !important;
+      border: 1px solid var(--border-color) !important; 
+      border-radius: 4px !important; 
+      background: var(--surface-color) !important; 
+      margin-top: 16px !important;
     }
     [data-testid="stExpander"] summary {
       font-weight: 500 !important; 
-      font-size: 0.9rem !important;
-      color: var(--text-muted) !important;
+      font-size: 0.85rem !important;
+      color: var(--text-secondary) !important;
     }
-    
     .citation-badge {
       display: inline-block;
-      background: var(--card-alt);
-      border: 1px solid var(--border);
-      padding: 4px 10px;
-      border-radius: 16px;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      padding: 4px 8px;
+      border-radius: 4px;
       font-size: 0.75rem;
       font-weight: 600;
-      color: var(--text-main);
-      margin: 4px 8px 8px 0;
+      font-family: monospace;
+      color: var(--text-primary);
+      margin: 0 8px 8px 0;
     }
     .citation-text {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      font-style: italic;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      border-left: 2px solid var(--border-color);
+      padding-left: 12px;
+      margin-top: 8px;
+      margin-bottom: 16px;
     }
-    .citation-text:last-child { border-bottom: none; }
 
     /* ---------- File Uploader ---------- */
     [data-testid="stFileUploader"] { 
-      background: var(--bg) !important; 
-      border: 1px dashed var(--border) !important; 
-      border-radius: 8px !important; 
+      background: var(--bg-color) !important; 
+      border: 1px dashed var(--border-color) !important; 
+      border-radius: 4px !important; 
     }
     </style>
     """,
@@ -200,22 +220,37 @@ def load_embeddings():
 
 embeddings = load_embeddings()
 
+# ---------------------------------------------------------------------------
+# Top Navigation Bar
+# ---------------------------------------------------------------------------
+st.markdown(
+    """
+    <div class="top-nav">
+      <div class="nav-brand">FinRAG Terminal</div>
+      <div class="nav-links">
+        <a href="#about">About</a>
+        <a href="#instructions">Instructions</a>
+      </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # ---------------------------------------------------------------------------
 # Sidebar - Document Upload
 # ---------------------------------------------------------------------------
-st.sidebar.markdown('<div class="sidebar-title">📁 Workspace</div>', unsafe_allow_html=True)
+st.sidebar.markdown('<div class="sidebar-header">Data Ingestion</div>', unsafe_allow_html=True)
 
 if "custom_db" not in st.session_state:
     st.session_state.custom_db = None
 if "file_name" not in st.session_state:
     st.session_state.file_name = None
 
-uploaded_file = st.sidebar.file_uploader("Upload a PDF document", type="pdf")
+uploaded_file = st.sidebar.file_uploader("Upload target PDF", type="pdf")
 
 if uploaded_file is not None:
     if st.session_state.file_name != uploaded_file.name:
-        with st.spinner("Processing document..."):
+        with st.spinner("Indexing document vectors..."):
             doc = fitz.open(stream=uploaded_file.getvalue(), filetype="pdf")
             page_documents = []
 
@@ -224,24 +259,23 @@ if uploaded_file is not None:
                 if text.strip():
                     page_documents.append(Document(
                         page_content=text,
-                        metadata={"page_num": page_num + 1, "doc_type": "Document"}
+                        metadata={"page_num": page_num + 1, "doc_type": "Source Document"}
                     ))
 
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=750, chunk_overlap=100)
             chunks = text_splitter.split_documents(page_documents)
             st.session_state.custom_db = Chroma.from_documents(documents=chunks, embedding=embeddings)
             st.session_state.file_name = uploaded_file.name
-        st.sidebar.success("✓ Document ready for analysis")
+        st.sidebar.success("Index complete. Document ready.")
 else:
     st.session_state.custom_db = None
     st.session_state.file_name = None
 
-# Plain English Privacy Note
 st.sidebar.markdown(
     """
-    <div class="privacy-note">
-      <strong>Privacy Secure</strong><br>
-      Your document is processed in memory for this session only. It is not saved to any database and disappears as soon as you refresh or close this tab.
+    <div style="margin-top: 2rem; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.6;">
+      <strong>SECURITY PROTOCOL</strong><br>
+      Data is processed exclusively in temporary session memory. No disk persistence. Data is purged upon session termination.
     </div>
     """,
     unsafe_allow_html=True,
@@ -249,38 +283,49 @@ st.sidebar.markdown(
 
 
 # ---------------------------------------------------------------------------
-# Main Area - Header & Instructions
+# Main Area - Info Sections & Chat
 # ---------------------------------------------------------------------------
-st.markdown('<div class="main-title">FinRAG Workspace</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">Intelligent document analysis with verifiable citations.</div>', unsafe_allow_html=True)
+st.markdown('<div class="page-header">Document Intelligence Engine</div>', unsafe_allow_html=True)
+st.markdown('<div class="page-subheader">Secure Retrieval-Augmented Generation (RAG) for analytical processing.</div>', unsafe_allow_html=True)
 
-# Beautiful Instructions Card
+# Anchor for About
+st.markdown('<div id="about" class="section-title">About</div>', unsafe_allow_html=True)
 st.markdown(
     """
-    <div class="instructions-card">
-      <h3>📖 How to use FinRAG</h3>
-      <ul class="instructions-list">
-        <li><strong>Step 1: Upload a PDF.</strong> Drag and drop any document (annual report, research paper, etc.) into the sidebar on the left.</li>
-        <li><strong>Step 2: Let it process.</strong> Wait a few seconds for the AI to read and index the pages.</li>
-        <li><strong>Step 3: Ask questions.</strong> Use the chat bar below to ask specific questions about the document.</li>
-        <li><strong>Step 4: Verify the facts.</strong> Click the <i>"View Verified Sources"</i> dropdown under the AI's answer to see the exact page numbers and text excerpts it used to generate the response.</li>
-      </ul>
+    <div class="section-text">
+      FinRAG is an enterprise-grade document analysis terminal designed to extract and synthesize information from dense financial filings, reports, and documentation. Utilizing localized vector embeddings and advanced language modeling, it ensures all outputs are strictly grounded in the provided source material to prevent data hallucination.
     </div>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
+
+# Anchor for Instructions
+st.markdown('<div id="instructions" class="section-title">Instructions</div>', unsafe_allow_html=True)
+st.markdown(
+    """
+    <ol class="instruction-list">
+      <li><strong>Ingest Document:</strong> Utilize the sidebar module to upload a target PDF file.</li>
+      <li><strong>Vector Processing:</strong> Allow the system to autonomously chunk and embed the document content into the active session memory.</li>
+      <li><strong>Execute Query:</strong> Input specific, targeted questions into the terminal interface below.</li>
+      <li><strong>Audit Trail:</strong> Review the system's generated response and expand the "Audit Verification" panel to confirm page-level source citations.</li>
+    </ol>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown('<div style="margin-top: 3rem;"></div>', unsafe_allow_html=True)
 
 # Stop if no file is attached
 if st.session_state.custom_db is None:
-    st.info("👈 Please upload a PDF in the sidebar to get started.")
+    st.warning("SYSTEM HALT: Target document required for analysis. Please upload a file via the sidebar to proceed.")
     st.stop()
 
 # Active Document Indicator
 st.markdown(
     f"""
-    <div style="background: var(--card-bg); border: 1px solid var(--border); padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; display: inline-block;">
-      <span style="color: var(--text-muted); font-size: 0.9rem;">Currently analyzing:</span> 
-      <strong style="color: var(--accent); margin-left: 6px;">{st.session_state.file_name}</strong>
+    <div style="background: var(--surface-color); border: 1px solid var(--border-color); padding: 12px 16px; border-radius: 4px; margin-bottom: 2rem; font-size: 0.85rem;">
+      <span style="color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Active Target File:</span> 
+      <strong style="color: var(--text-primary); margin-left: 8px;">{st.session_state.file_name}</strong>
     </div>
     """, 
     unsafe_allow_html=True
@@ -295,15 +340,10 @@ active_vectorstore = st.session_state.custom_db
 def render_sources(sources):
     if not sources:
         return
-    with st.expander("📚 View Verified Sources"):
-        badges_html = "<div>"
+    with st.expander("VIEW AUDIT VERIFICATION"):
         for src in sources:
             page_num = src.get('page_num', 'N/A')
-            badges_html += f"<span class='citation-badge'>Page {page_num}</span>"
-        badges_html += "</div>"
-        st.markdown(badges_html, unsafe_allow_html=True)
-        
-        for src in sources:
+            st.markdown(f"<div class='citation-badge'>PAGE {page_num}</div>", unsafe_allow_html=True)
             excerpt = src.get('excerpt', '')
             st.markdown(f"<div class='citation-text'>\"{excerpt}...\"</div>", unsafe_allow_html=True)
 
@@ -313,26 +353,26 @@ if "messages" not in st.session_state:
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
-        avatar_class = "ai" if msg["role"] == "assistant" else "user"
-        label = "FinRAG" if msg["role"] == "assistant" else "You"
-        st.markdown(f"<div class='msg-avatar {avatar_class}'>{label}</div>", unsafe_allow_html=True)
+        label_class = "system" if msg["role"] == "assistant" else "user"
+        label = "FinRAG System" if msg["role"] == "assistant" else "Analyst"
+        st.markdown(f"<div class='msg-label {label_class}'>{label}</div>", unsafe_allow_html=True)
         
         st.markdown(msg["content"])
         render_sources(msg.get("sources"))
 
-if user_prompt := st.chat_input("Ask a question about the document..."):
+if user_prompt := st.chat_input("Enter query parameter..."):
     st.session_state.messages.append({"role": "user", "content": user_prompt})
     with st.chat_message("user"):
-        st.markdown("<div class='msg-avatar user'>You</div>", unsafe_allow_html=True)
+        st.markdown("<div class='msg-label user'>Analyst</div>", unsafe_allow_html=True)
         st.markdown(user_prompt)
 
-    with st.spinner("Searching document and generating answer..."):
+    with st.spinner("Executing retrieval sequence..."):
         results = active_vectorstore.similarity_search(query=user_prompt, k=5)
         context = "\n\n".join([doc.page_content for doc in results])
 
-        system_prompt = f"""You are a helpful research assistant.
+        system_prompt = f"""You are a strict, professional financial research assistant.
 Answer ONLY using the provided context. If the context does not contain the answer, explicitly state:
-"I don't know based on the provided document." Do not hallucinate or use outside knowledge.
+"Data not found in the provided document." Do not hallucinate or use outside knowledge. Use a formal, objective tone.
 
 Context:
 {context}"""
@@ -355,7 +395,7 @@ Context:
         ]
 
     with st.chat_message("assistant"):
-        st.markdown("<div class='msg-avatar ai'>FinRAG</div>", unsafe_allow_html=True)
+        st.markdown("<div class='msg-label system'>FinRAG System</div>", unsafe_allow_html=True)
         st.markdown(answer)
         render_sources(sources)
 
